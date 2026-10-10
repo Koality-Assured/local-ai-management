@@ -209,6 +209,28 @@
       "default_context_tokens": 32768,
       "ollama_pull_command": "ollama pull qwen2.5:0.5b",
       "notes": "Runs inside standard Ollama with JSON/regex grammar constraints terminating in 1 token."
+    },
+    {
+      "id": "smollm2:360m",
+      "name": "SmolLM2 360M Instruct (FSM Constrained)",
+      "family": "smollm",
+      "parameters_billion": 0.36,
+      "default_quantization": "Q4_K_M",
+      "size_gb": 0.25,
+      "minimum_vram_gb": 0.3,
+      "recommended_vram_gb": 0.5,
+      "recommended_tiers": ["Tier 0", "Tier A", "Tier B", "Tier C", "Tier D", "Tier E"],
+      "primary_role": "FSM grammar-constrained fast triage SLM",
+      "category": "system_one",
+      "is_system_one": true,
+      "task_suitability": ["routing", "triage", "boolean_gates"],
+      "benchmarks": {
+        "latency_gpu_ms": 22.0,
+        "latency_cpu_ms": 48.0
+      },
+      "default_context_tokens": 8192,
+      "ollama_pull_command": "ollama pull smollm2:360m",
+      "notes": "Ultra-compact SLM running fast 1-token grammar-constrained triage even on low-end CPUs."
     }
   ]
 }
