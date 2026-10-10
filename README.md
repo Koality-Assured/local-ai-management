@@ -176,10 +176,24 @@ local-ai modelfile --model qwen2.5-coder:14b --context 32768
 local-ai modelfile --model ./models/qwen.gguf --engine llama-server --context 16384
 ```
 
+#### 6. Direct Inference & Interactive REPL (Air-Gapped Workloads)
+Engage in direct human-driven inference with zero telemetry, streaming output, context file ingestion, and piped input support:
+```bash
+# Interactive REPL session with specialized preset
+local-ai chat --model qwen2.5-coder:14b --preset security
+
+# One-shot query with file context injection
+local-ai chat -m qwen2.5-coder:14b -f ./vuln.c -q "Audit for buffer overflow"
+
+# Pipe diff or log into local model
+git diff | local-ai chat -m qwen2.5-coder:14b -q "Review for security regressions"
+```
+
 ---
 
 ## Repository Documentation
 
+- [`docs/direct-inference-guide.md`](docs/direct-inference-guide.md): Operational handbook for direct human inference, air-gapped security, exploit research, uncensored models, and private repository isolation.
 - [`docs/system-one-models.md`](docs/system-one-models.md): Non-autoregressive decision models, Kahneman dual-process analogy, Jev vs. Laya/ModernBERT, and sub-50ms routing.
 - [`docs/hardware-profiles.md`](docs/hardware-profiles.md): Detailed tier definitions, VRAM math, and memory allocation diagrams.
 - [`docs/serving-engines.md`](docs/serving-engines.md): Step-by-step setup recipes for Ollama, `llama-server`, FlashAttention-2, and quantized KV caching.

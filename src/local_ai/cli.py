@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from local_ai.benchmark import STANDARD_BENCHMARKS, SYSTEM_ONE_BENCHMARKS, run_benchmark_suite
 from local_ai.catalog import filter_by_task, filter_by_tier, filter_system_one, get_model, load_catalog
+from local_ai.chat import SYSTEM_PRESETS, complete_chat, load_file_context, run_repl, stream_chat
 from local_ai.hardware import detect_hardware
 from local_ai.modelfile import generate_llama_server_command, generate_ollama_modelfile
 from local_ai.onboard import run_onboarding
@@ -54,6 +56,24 @@ def build_parser() -> argparse.ArgumentParser:
     p_model.add_argument("--context", type=int, default=32768, help="Context window token count")
     p_model.add_argument("--temperature", type=float, default=0.2, help="Sampling temperature")
     p_model.add_argument("--engine", choices=["ollama", "llama-server"], default="ollama", help="Target engine")
+ 
+    # chat
+    p_chat = sub.add_parser("chat", help="Direct local inference REPL and one-shot execution", parents=[shared])
+    p_chat.add_argument("-q", "--query", help="One-shot query text")
+    p_chat.add_argument("-f", "--file", action="append", default=[], help="Context file path (can specify multiple)")
+    p_chat.add_argument("-m", "--model", default="qwen2.5-coder:14b", help="Model ID (default: qwen2.5-coder:14b)")
+    p_chat.add_argument(
+        "--preset",
+        choices=["general", "private_code", "security", "analysis", "raw"],
+        default="general",
+        help="System prompt preset (default: general)",
+    )
+    p_chat.add_argument("--system", help="Custom system prompt string")
+    p_chat.add_argument("--system-file", help="Path to file containing custom system prompt")
+    p_chat.add_argument("--temperature", type=float, default=0.2, help="Sampling temperature")
+    p_chat.add_argument("--base-url", default="http://127.0.0.1:11434/v1", help="Target local endpoint")
+    p_chat.add_argument("--allow-remote", action="store_true", help="Allow non-loopback endpoints")
+    p_chat.add_argument("--no-stream", action="store_true", help="Buffer output instead of streaming")
 
     return parser
 
@@ -178,6 +198,94 @@ def main(argv: list[str] | None = None) -> int:
             )
         print(content)
         return 0
+
+    if args.cmd == "chat":
+        custom_system = None
+        if args.system:
+            custom_system = args.system
+        elif getattr(args, "system_file", None):
+            sys_p = Path(args.system_file).expanduser().resolve()
+            if not sys_p.is_file():
+                print(f"Error: system prompt file not found: {args.system_file}", file=sys.stderr)
+                return 1
+            custom_system = sys_p.read_text(encoding="utf-8")
+
+        stdin_content = ""
+        if not sys.stdin.isatty():
+            try:
+                stdin_content = sys.stdin.read()
+            except Exception:
+                pass
+
+        context_text = ""
+        if args.file:
+            try:
+                context_text = load_file_context(args.file)
+            except Exception as exc:
+                print(f"Error loading context files: {exc}", file=sys.stderr)
+                return 1
+
+        query = args.query
+        if sys.stdin.isatty() and not query and not stdin_content and not context_text:
+            return run_repl(
+                model=args.model,
+                base_url=args.base_url,
+                preset=args.preset,
+                custom_system=custom_system,
+                temperature=args.temperature,
+                allow_remote=args.allow_remote,
+            )
+
+        prompt_parts: list[str] = []
+        if context_text:
+            prompt_parts.append(context_text)
+        if stdin_content:
+            prompt_parts.append(f"--- Piped Input ---\n{stdin_content.strip()}\n--- End Piped Input ---")
+        if query:
+            prompt_parts.append(query)
+        elif not prompt_parts:
+            print("Error: No query, stdin input, or file context provided.", file=sys.stderr)
+            return 1
+
+        full_user_prompt = "\n\n".join(prompt_parts)
+        system_text = custom_system if custom_system is not None else SYSTEM_PRESETS.get(args.preset, "")
+        messages: list[dict[str, Any]] = []
+        if system_text:
+            messages.append({"role": "system", "content": system_text})
+        messages.append({"role": "user", "content": full_user_prompt})
+
+        try:
+            if args.no_stream or args.json:
+                result_text = complete_chat(
+                    messages=messages,
+                    model=args.model,
+                    base_url=args.base_url,
+                    temperature=args.temperature,
+                    allow_remote=args.allow_remote,
+                )
+                if args.json:
+                    out_payload = {
+                        "model": args.model,
+                        "preset": args.preset,
+                        "response": result_text,
+                    }
+                    print(json.dumps(out_payload, indent=2))
+                else:
+                    print(result_text)
+            else:
+                for chunk in stream_chat(
+                    messages=messages,
+                    model=args.model,
+                    base_url=args.base_url,
+                    temperature=args.temperature,
+                    allow_remote=args.allow_remote,
+                ):
+                    print(chunk, end="", flush=True)
+                print()
+            return 0
+        except Exception as exc:
+            print(f"Error during inference: {exc}", file=sys.stderr)
+            return 1
 
     return 0
 
