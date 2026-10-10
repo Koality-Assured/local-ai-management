@@ -67,6 +67,26 @@ class TestCli(unittest.TestCase):
         self.assertEqual(res["status"], "approved")
         self.assertTrue(res["human_approved"])
 
+    def test_cli_catalog_system_one(self) -> None:
+        out = io.StringIO()
+        with patch("sys.stdout", out):
+            code = main(["catalog", "--system-one", "--json"])
+        self.assertEqual(code, 0)
+        models = json.loads(out.getvalue())
+        self.assertGreaterEqual(len(models), 3)
+        self.assertTrue(all(m.get("is_system_one") for m in models))
+
+    def test_cli_benchmark_system_one_suite(self) -> None:
+        out = io.StringIO()
+        with patch("sys.stdout", out):
+            code = main(["benchmark", "--model", "laya-modernbert-large", "--suite", "system_one", "--mock", "--json"])
+        self.assertEqual(code, 0)
+        results = json.loads(out.getvalue())
+        self.assertEqual(len(results), 3)
+        for r in results:
+            self.assertTrue(r["passed_validation"])
+            self.assertLess(r["ttft_ms"], 25.0)
+
     def test_cli_modelfile(self) -> None:
         out = io.StringIO()
         with patch("sys.stdout", out):
@@ -77,3 +97,4 @@ class TestCli(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

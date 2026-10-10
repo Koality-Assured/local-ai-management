@@ -6,8 +6,8 @@ import argparse
 import json
 import sys
 
-from local_ai.benchmark import STANDARD_BENCHMARKS, run_benchmark_suite
-from local_ai.catalog import filter_by_task, filter_by_tier, get_model, load_catalog
+from local_ai.benchmark import STANDARD_BENCHMARKS, SYSTEM_ONE_BENCHMARKS, run_benchmark_suite
+from local_ai.catalog import filter_by_task, filter_by_tier, filter_system_one, get_model, load_catalog
 from local_ai.hardware import detect_hardware
 from local_ai.modelfile import generate_llama_server_command, generate_ollama_modelfile
 from local_ai.onboard import run_onboarding
@@ -31,12 +31,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_cat = sub.add_parser("catalog", help="Inspect machine-readable model catalog", parents=[shared])
     p_cat.add_argument("--tier", help="Filter models by hardware tier (e.g. 'Tier A')")
     p_cat.add_argument("--task", help="Filter models by task suitability")
+    p_cat.add_argument("--system-one", action="store_true", help="Filter for System 1 decision models")
     p_cat.add_argument("--id", help="Inspect detailed specifications for a specific model id")
 
     # benchmark
     p_bench = sub.add_parser("benchmark", help="Run empirical benchmarks across latency and quality", parents=[shared])
     p_bench.add_argument("--model", default="qwen2.5-coder:14b", help="Model ID to benchmark")
     p_bench.add_argument("--models", help="Comma-separated model IDs to benchmark")
+    p_bench.add_argument("--suite", choices=["standard", "system_one", "all"], default="standard", help="Benchmark suite to execute")
     p_bench.add_argument("--base-url", default="http://127.0.0.1:11434/v1", help="OpenAI-compatible base URL")
     p_bench.add_argument("--mock", action="store_true", help="Run in mock/offline mode for CI/testing")
 
@@ -106,6 +108,8 @@ def main(argv: list[str] | None = None) -> int:
             models = filter_by_tier(args.tier, models)
         if args.task:
             models = filter_by_task(args.task, models)
+        if getattr(args, "system_one", False):
+            models = filter_system_one(models)
 
         if args.json:
             print(json.dumps(models, indent=2))
@@ -114,22 +118,23 @@ def main(argv: list[str] | None = None) -> int:
         print(f"=== Model Catalog ({len(models)} models) ===")
         for m in models:
             tiers = ", ".join(m.get("recommended_tiers", []))
-            print(f"- {m['id']:<20} | {m['size_gb']:>4} GB | Tiers: [{tiers}] | {m['primary_role']}")
+            print(f"- {m['id']:<32} | {m['size_gb']:>4} GB | Tiers: [{tiers}] | {m['primary_role']}")
         return 0
 
     if args.cmd == "benchmark":
         model_list = [m.strip() for m in args.models.split(",")] if args.models else [args.model]
-        results = run_benchmark_suite(model_list, base_url=args.base_url, mock=args.mock)
+        suite_name = getattr(args, "suite", "standard")
+        results = run_benchmark_suite(model_list, base_url=args.base_url, mock=args.mock, suite=suite_name)
         if args.json:
             print(json.dumps([r.to_dict() for r in results], indent=2))
             return 0
 
-        print(f"=== Local Model Benchmark Results ({len(results)} runs) ===")
-        print(f"{'Task':<22} {'Model':<18} {'TTFT':<10} {'Tok/s':<10} {'Passed':<8}")
-        print("-" * 72)
+        print(f"=== Local Model Benchmark Results: Suite '{suite_name}' ({len(results)} runs) ===")
+        print(f"{'Task':<26} {'Model':<18} {'TTFT':<10} {'Tok/s':<10} {'Passed':<8}")
+        print("-" * 76)
         for r in results:
             passed_str = "YES" if r.passed_validation else "NO"
-            print(f"{r.task_id:<22} {r.model_id:<18} {r.ttft_ms:>6.1f} ms {r.tokens_per_sec:>7.1f} t/s {passed_str:<8}")
+            print(f"{r.task_id:<26} {r.model_id:<18} {r.ttft_ms:>6.1f} ms {r.tokens_per_sec:>7.1f} t/s {passed_str:<8}")
         return 0
 
     if args.cmd == "onboard":

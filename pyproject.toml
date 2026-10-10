@@ -47,5 +47,8 @@ local-ai = "local_ai.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-[tool.setuptools]
-packages = []
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+

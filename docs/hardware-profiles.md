@@ -8,6 +8,7 @@ To provide clear operational guidance without coupling to specific machines, wor
 
 | Profile Tier | GPU / VRAM Class | System RAM & Bandwidth | Recommended Model Placement | Expected Throughput |
 | :--- | :--- | :--- | :--- | :--- |
+| **Tier 0 (System 1 Decision Layer)** | Co-exists with any GPU or CPU (<1 GB VRAM or RAM) | Shared with host OS | Laya (421M), ModernBERT (149M), SmolLM2-360M | **10–40 ms / decision**<br>(Non-autoregressive forward pass) |
 | **Tier A (High-Performance GPU)** | 16 GB+ VRAM (e.g. Ada / Ampere / RDNA3 class; ~700+ GB/s) | 64–128 GB DDR5 (~70–90 GB/s) | 14B Q4_K_M (100% VRAM); 32B hybrid offload (GPU/CPU) | 14B: 70–85 tok/s<br>7B: 115–140 tok/s<br>32B: 14–18 tok/s |
 | **Tier B (Standard Workstation GPU)** | 10–12 GB VRAM (e.g. RTX 4070 / 3080 class; ~500 GB/s) | 32–64 GB DDR4/DDR5 | 7B Q8_0 / 14B Q4_K_M (bounded context 8k–16k) | 14B: 65–75 tok/s<br>7B: 100–120 tok/s |
 | **Tier C (Entry / Mobile GPU)** | 6–8 GB VRAM (e.g. RTX 4060 / Laptop class; ~280 GB/s) | 16–32 GB RAM | 7B Q4_K_M (100% VRAM) / 3B models | 7B: 80–110 tok/s<br>3B: 140+ tok/s |

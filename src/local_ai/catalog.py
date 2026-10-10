@@ -44,3 +44,10 @@ def filter_by_task(task: str, models: list[dict[str, Any]] | None = None) -> lis
     entries = models if models is not None else load_catalog()
     target_task = task.strip().lower()
     return [m for m in entries if target_task in [t.lower() for t in m.get("task_suitability", [])]]
+
+
+def filter_system_one(models: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Filter models categorized as System 1 decision models."""
+    entries = models if models is not None else load_catalog()
+    return [m for m in entries if m.get("category") == "system_one" or m.get("is_system_one", False)]
+

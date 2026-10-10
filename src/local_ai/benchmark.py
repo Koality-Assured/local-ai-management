@@ -40,6 +40,33 @@ STANDARD_BENCHMARKS = [
     },
 ]
 
+SYSTEM_ONE_BENCHMARKS = [
+    {
+        "id": "sys1_choice_routing",
+        "name": "System 1 Skill Dispatch (Choice)",
+        "system": "You are a System 1 decision engine. Return typed choice: {'answer': str, 'confidence': float}.",
+        "prompt": "State: User requests refactoring of auth middleware to use JWT verification. Questions: {'skill': {'type': 'choice', 'criteria': {'refactor': 'code cleanup', 'testing': 'test writing', 'deploy': 'deployment'}}}",
+        "validator": lambda text: "refactor" in text.lower(),
+        "is_system_one": True,
+    },
+    {
+        "id": "sys1_mutation_gating",
+        "name": "System 1 Mutation Gating (Noul)",
+        "system": "You are a System 1 decision engine. Return calibrated boolean: {'answer': 'yes'|'no', 'p_true': float}.",
+        "prompt": "State: git checkout -b feature/auth && git commit -m 'feat: add jwt'. Questions: {'is_mutating': {'type': 'noul', 'instructions': 'Does this change repository state?'}}",
+        "validator": lambda text: "yes" in text.lower(),
+        "is_system_one": True,
+    },
+    {
+        "id": "sys1_complexity_scoring",
+        "name": "System 1 Complexity Rubric (Score)",
+        "system": "You are a System 1 decision engine. Return expected rubric score: {'score': float, 'variance': float}.",
+        "prompt": "State: Replace print statement with logger.debug in helper.py. Questions: {'complexity': {'type': 'score', 'instructions': 'Score 1 to 5'}}",
+        "validator": lambda text: "score" in text.lower(),
+        "is_system_one": True,
+    },
+]
+
 
 def _validate_json_extraction(text: str) -> bool:
     cleaned = text.strip()
@@ -98,6 +125,26 @@ def run_single_benchmark(
     validator: Callable[[str], bool] = benchmark_task.get("validator", lambda _: True)
 
     if mock:
+        is_sys1 = benchmark_task.get("is_system_one", False)
+        if is_sys1:
+            time.sleep(0.01)
+            ttft_ms = 14.8
+            mock_output = _get_mock_output(task_id)
+            tokens = len(mock_output.split()) * 2
+            gen_time = 0.015
+            passed = validator(mock_output)
+            return BenchmarkRunResult(
+                task_id=task_id,
+                task_name=task_name,
+                model_id=model_id,
+                ttft_ms=ttft_ms,
+                total_duration_sec=0.01 + gen_time,
+                output_tokens=tokens,
+                tokens_per_sec=tokens / gen_time if gen_time > 0 else 0.0,
+                passed_validation=passed,
+                output_preview=mock_output,
+            )
+
         # Simulate realistic local streaming latency and token generation
         time.sleep(0.05)  # 50ms TTFT
         ttft_ms = 48.5
@@ -210,6 +257,12 @@ def _get_mock_output(task_id: str) -> str:
     return [i for i in items if i > threshold]"""
     if task_id == "reasoning":
         return "Combined speed is 60 + 90 = 150 mph. Time to meet = 30 / 150 = 0.2 hours = 12 minutes."
+    if task_id == "sys1_choice_routing":
+        return '{"skill": {"answer": "refactor", "confidence": 0.962}}'
+    if task_id == "sys1_mutation_gating":
+        return '{"is_mutating": {"answer": "yes", "p_true": 0.995, "confidence": 0.995}}'
+    if task_id == "sys1_complexity_scoring":
+        return '{"complexity": {"score": 1.2, "variance": 0.08}}'
     return "Mock model output"
 
 
@@ -218,9 +271,18 @@ def run_benchmark_suite(
     base_url: str = "http://127.0.0.1:11434/v1",
     tasks: list[dict[str, Any]] | None = None,
     mock: bool = False,
+    suite: str = "standard",
 ) -> list[BenchmarkRunResult]:
     """Execute benchmark suite across multiple models."""
-    selected_tasks = tasks or STANDARD_BENCHMARKS
+    if tasks is not None:
+        selected_tasks = tasks
+    elif suite == "system_one":
+        selected_tasks = SYSTEM_ONE_BENCHMARKS
+    elif suite == "all":
+        selected_tasks = STANDARD_BENCHMARKS + SYSTEM_ONE_BENCHMARKS
+    else:
+        selected_tasks = STANDARD_BENCHMARKS
+
     results: list[BenchmarkRunResult] = []
     for mid in model_ids:
         for task in selected_tasks:

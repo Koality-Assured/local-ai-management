@@ -77,6 +77,7 @@ To guide model selection and memory budgeting across diverse development setups,
 
 | Profile Tier | Hardware Baseline | System RAM & Memory Bandwidth | Target Models & Placement | Expected Throughput |
 | :--- | :--- | :--- | :--- | :--- |
+| **Tier 0 (System 1 Decision Layer)** | Co-exists with any GPU or CPU (<1 GB VRAM or RAM) | Shared with host OS | Laya (421M), ModernBERT (149M), SmolLM2-360M | **10–40 ms / decision**<br>(Non-autoregressive forward pass) |
 | **Tier A (High-Performance GPU)** | 16 GB+ VRAM (Ada / Ampere / RDNA3; ~700+ GB/s) | 64–128 GB DDR5 (~70–90 GB/s) | 14B Q4_K_M (100% VRAM); 32B hybrid offload | 14B: 70–85 tok/s<br>7B: 115–140 tok/s<br>32B: 14–18 tok/s |
 | **Tier B (Standard Workstation GPU)** | 10–12 GB VRAM (RTX 4070 / 3080 class; ~500 GB/s) | 32–64 GB DDR4/DDR5 | 7B Q8_0 / 14B Q4_K_M (bounded context 8k–16k) | 14B: 65–75 tok/s<br>7B: 100–120 tok/s |
 | **Tier C (Entry / Mobile GPU)** | 6–8 GB VRAM (RTX 4060 / Laptop class; ~280 GB/s) | 16–32 GB RAM | 7B Q4_K_M (100% VRAM) / 3B models | 7B: 80–110 tok/s<br>3B: 140+ tok/s |
@@ -91,15 +92,17 @@ See [`docs/hardware-profiles.md`](docs/hardware-profiles.md) for complete VRAM b
 
 A machine-readable catalog is maintained in [`models/catalog.json`](models/catalog.json):
 
-| Model | Parameters | Quantization | Size | Target Placement | HumanEval | Primary Role |
+| Model | Parameters | Quantization | Size | Target Placement | Latency / Metric | Primary Role |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Qwen 2.5 Coder 14B Instruct** | 14.7B | Q4_K_M | 8.98 GB | 100% VRAM (Tier A/B) | 86.6% | **Primary Coding Workhorse**: Code generation, refactoring, AST transforms. |
-| **Qwen 2.5 Coder 7B Instruct** | 7.6B | Q4_K_M | 4.68 GB | 100% VRAM (Tier A–C) | 82.3% | **High-Velocity Deferral**: Linter fixes, boilerplate, commit messages (>115 tok/s). |
+| **Laya (ModernBERT-large)** | 421M | FP16 / Int8 | 0.84 GB | 100% VRAM / RAM | **12–20 ms** (GPU) | **System 1 Decision Engine**: Non-autoregressive routing, triage, mutation gating. |
+| **ModernBERT-base Classifier**| 149M | FP16 / Int8 | 0.30 GB | 100% VRAM / RAM | **6–10 ms** (GPU) | **Inline Guardrails & Triage**: High-throughput taint analysis and security gating. |
+| **Qwen 2.5 Coder 14B Instruct** | 14.7B | Q4_K_M | 8.98 GB | 100% VRAM (Tier A/B) | 86.6% (HumanEval) | **Primary Coding Workhorse**: Code generation, refactoring, AST transforms. |
+| **Qwen 2.5 Coder 7B Instruct** | 7.6B | Q4_K_M | 4.68 GB | 100% VRAM (Tier A–C) | 82.3% (HumanEval) | **High-Velocity Deferral**: Linter fixes, boilerplate, commit messages (>115 tok/s). |
 | **DeepSeek-R1-Distill-Qwen-14B** | 14.7B | Q4_K_M | 8.98 GB | 100% VRAM (Tier A/B) | 93.9% (MATH) | **Deep Reasoning**: Architecture planning, complex regex synthesis, debugging. |
-| **Llama 3.1 8B Instruct** | 8.0B | Q4_K_M | 4.92 GB | 100% VRAM (Tier A–C) | 72.6% | **Generalist / Tool-Use**: JSON extraction, classification, general NLP. |
-| **Qwen 2.5 Coder 32B Instruct** | 32.5B | Q4_K_M | 19.8 GB | Hybrid (GPU + RAM) | 92.7% | **Frontier-Level Coding**: Autonomous multi-file module scaffolding. |
-| **Qwen 2.5 Coder 1.5B Instruct** | 1.54B | Q4_K_M | 1.10 GB | 100% RAM (Tier E) | 65.2% | **CPU Fallback**: Ultra-fast lightweight transformations on CPU. |
-| **Nomic Embed Text v1.5** | 137M | FP16 | 0.56 GB | 100% VRAM | 62.28 (MTEB)| **Local Embeddings**: High-speed semantic search & RAG routing. |
+| **Llama 3.1 8B Instruct** | 8.0B | Q4_K_M | 4.92 GB | 100% VRAM (Tier A–C) | 72.6% (HumanEval) | **Generalist / Tool-Use**: JSON extraction, classification, general NLP. |
+| **Qwen 2.5 Coder 32B Instruct** | 32.5B | Q4_K_M | 19.8 GB | Hybrid (GPU + RAM) | 92.7% (HumanEval) | **Frontier-Level Coding**: Autonomous multi-file module scaffolding. |
+| **Qwen 2.5 Coder 1.5B Instruct** | 1.54B | Q4_K_M | 1.10 GB | 100% RAM (Tier E) | 65.2% (HumanEval) | **CPU Fallback**: Ultra-fast lightweight transformations on CPU. |
+| **Nomic Embed Text v1.5** | 137M | FP16 | 0.56 GB | 100% VRAM | 62.28 (MTEB) | **Local Embeddings**: High-speed semantic search & RAG routing. |
 
 ---
 
@@ -133,17 +136,21 @@ Query and filter evaluated open-weight models:
 ```bash
 local-ai catalog
 local-ai catalog --tier "Tier A"
+local-ai catalog --system-one
 local-ai catalog --id qwen2.5-coder:14b
 ```
 
 #### 3. Empirical Benchmarking
-Run standardized empirical benchmarks across code generation, structured JSON extraction, refactoring, and logical reasoning:
+Run standardized empirical benchmarks across code generation, structured JSON extraction, refactoring, logical reasoning, and System 1 decision latency:
 ```bash
 # Live run against local Ollama / llama-server
 local-ai benchmark --model qwen2.5-coder:14b
 
 # Run across multiple models
 local-ai benchmark --models qwen2.5-coder:14b,qwen2.5-coder:7b
+
+# Run dedicated System 1 fast decision suite (<50ms latency)
+local-ai benchmark --model laya-modernbert-large --suite system_one --mock
 
 # Offline / Mock mode for CI and headless testing
 local-ai benchmark --mock --json
@@ -173,6 +180,7 @@ local-ai modelfile --model ./models/qwen.gguf --engine llama-server --context 16
 
 ## Repository Documentation
 
+- [`docs/system-one-models.md`](docs/system-one-models.md): Non-autoregressive decision models, Kahneman dual-process analogy, Jev vs. Laya/ModernBERT, and sub-50ms routing.
 - [`docs/hardware-profiles.md`](docs/hardware-profiles.md): Detailed tier definitions, VRAM math, and memory allocation diagrams.
 - [`docs/serving-engines.md`](docs/serving-engines.md): Step-by-step setup recipes for Ollama, `llama-server`, FlashAttention-2, and quantized KV caching.
 - [`docs/frontier-deferral.md`](docs/frontier-deferral.md): Task suitability taxonomy, harness CLI routing, and token economy ROI.

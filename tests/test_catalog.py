@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from local_ai.catalog import filter_by_task, filter_by_tier, get_model, load_catalog
+from local_ai.catalog import filter_by_task, filter_by_tier, filter_system_one, get_model, load_catalog
 
 
 class TestModelCatalog(unittest.TestCase):
@@ -39,6 +39,16 @@ class TestModelCatalog(unittest.TestCase):
         ids = [m["id"] for m in refactor_models]
         self.assertIn("qwen2.5-coder:14b", ids)
 
+    def test_filter_system_one(self) -> None:
+        sys1_models = filter_system_one()
+        ids = [m["id"] for m in sys1_models]
+        self.assertIn("laya-modernbert-large", ids)
+        self.assertIn("modernbert-base-classifier", ids)
+        self.assertIn("qwen2.5-0.5b-instruct-constrained", ids)
+        for m in sys1_models:
+            self.assertTrue(m.get("is_system_one"))
+
 
 if __name__ == "__main__":
     unittest.main()
+

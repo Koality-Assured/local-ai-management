@@ -141,6 +141,74 @@
       "default_context_tokens": 8192,
       "ollama_pull_command": "ollama pull nomic-embed-text",
       "notes": "High-speed 8192-context embedding model for local RAG and semantic routing."
+    },
+    {
+      "id": "laya-modernbert-large",
+      "name": "Laya (ModernBERT-large 421M)",
+      "family": "modernbert",
+      "parameters_billion": 0.421,
+      "default_quantization": "FP16",
+      "size_gb": 0.84,
+      "minimum_vram_gb": 0.5,
+      "recommended_vram_gb": 1.0,
+      "recommended_tiers": ["Tier 0", "Tier A", "Tier B", "Tier C", "Tier D", "Tier E"],
+      "primary_role": "System 1 non-autoregressive decision engine",
+      "category": "system_one",
+      "is_system_one": true,
+      "task_suitability": ["routing", "triage", "mutation_gating", "intent_classification", "guardrails"],
+      "benchmarks": {
+        "latency_gpu_ms": 15.2,
+        "latency_cpu_ms": 38.4,
+        "schema_adherence_percent": 100.0
+      },
+      "default_context_tokens": 8192,
+      "ollama_pull_command": "pip install laya",
+      "notes": "Apache 2.0 open-weight Jev alternative; single-pass typed decisions (choice, score, noul) in <35ms."
+    },
+    {
+      "id": "modernbert-base-classifier",
+      "name": "ModernBERT-base Classifier (149M)",
+      "family": "modernbert",
+      "parameters_billion": 0.149,
+      "default_quantization": "FP16",
+      "size_gb": 0.30,
+      "minimum_vram_gb": 0.25,
+      "recommended_vram_gb": 0.5,
+      "recommended_tiers": ["Tier 0", "Tier A", "Tier B", "Tier C", "Tier D", "Tier E"],
+      "primary_role": "High-throughput classification and taint analysis",
+      "category": "system_one",
+      "is_system_one": true,
+      "task_suitability": ["routing", "intent_classification", "security_guardrails", "taint_analysis"],
+      "benchmarks": {
+        "latency_gpu_ms": 8.1,
+        "latency_cpu_ms": 22.0,
+        "glue": 89.2
+      },
+      "default_context_tokens": 8192,
+      "ollama_pull_command": "pip install transformers",
+      "notes": "Ultra-fast bidirectional encoder with native 8k context and sub-10ms GPU latency."
+    },
+    {
+      "id": "qwen2.5-0.5b-instruct-constrained",
+      "name": "Qwen 2.5 0.5B Instruct (FSM Constrained)",
+      "family": "qwen",
+      "parameters_billion": 0.49,
+      "default_quantization": "Q4_K_M",
+      "size_gb": 0.35,
+      "minimum_vram_gb": 0.5,
+      "recommended_vram_gb": 0.8,
+      "recommended_tiers": ["Tier 0", "Tier A", "Tier B", "Tier C", "Tier D", "Tier E"],
+      "primary_role": "Grammar-constrained 1-token decision engine",
+      "category": "system_one",
+      "is_system_one": true,
+      "task_suitability": ["routing", "classification", "boolean_gates"],
+      "benchmarks": {
+        "latency_gpu_ms": 38.0,
+        "latency_cpu_ms": 72.0
+      },
+      "default_context_tokens": 32768,
+      "ollama_pull_command": "ollama pull qwen2.5:0.5b",
+      "notes": "Runs inside standard Ollama with JSON/regex grammar constraints terminating in 1 token."
     }
   ]
 }
