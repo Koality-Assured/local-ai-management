@@ -210,12 +210,13 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             custom_system = sys_p.read_text(encoding="utf-8")
 
-        stdin_content = ""
-        if not sys.stdin.isatty():
+        query = args.query
+        if query == "-":
             try:
-                stdin_content = sys.stdin.read()
-            except Exception:
-                pass
+                query = sys.stdin.read()
+            except Exception as exc:
+                print(f"Error reading query from stdin: {exc}", file=sys.stderr)
+                return 1
 
         context_text = ""
         if args.file:
@@ -225,27 +226,24 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Error loading context files: {exc}", file=sys.stderr)
                 return 1
 
-        query = args.query
-        if sys.stdin.isatty() and not query and not stdin_content and not context_text:
-            return run_repl(
-                model=args.model,
-                base_url=args.base_url,
-                preset=args.preset,
-                custom_system=custom_system,
-                temperature=args.temperature,
-                allow_remote=args.allow_remote,
-            )
+        if not query and not context_text:
+            if hasattr(sys.stdin, "isatty") and sys.stdin.isatty():
+                return run_repl(
+                    model=args.model,
+                    base_url=args.base_url,
+                    preset=args.preset,
+                    custom_system=custom_system,
+                    temperature=args.temperature,
+                    allow_remote=args.allow_remote,
+                )
+            print("Error: Interactive REPL requires a TTY. Pass -q/--query, -q -, or -f <file>.", file=sys.stderr)
+            return 1
 
         prompt_parts: list[str] = []
         if context_text:
             prompt_parts.append(context_text)
-        if stdin_content:
-            prompt_parts.append(f"--- Piped Input ---\n{stdin_content.strip()}\n--- End Piped Input ---")
         if query:
             prompt_parts.append(query)
-        elif not prompt_parts:
-            print("Error: No query, stdin input, or file context provided.", file=sys.stderr)
-            return 1
 
         full_user_prompt = "\n\n".join(prompt_parts)
         system_text = custom_system if custom_system is not None else SYSTEM_PRESETS.get(args.preset, "")

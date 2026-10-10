@@ -47,6 +47,10 @@ def load_file_context(file_paths: list[str]) -> str:
     """Read and format multiple context files into a delimited prompt block."""
     blocks: list[str] = []
     for fp in file_paths:
+        if fp == "-":
+            content = sys.stdin.read()
+            blocks.append(f"--- Context File: stdin ---\n{content}\n--- End File: stdin ---")
+            continue
         p = Path(fp).expanduser().resolve()
         if not p.is_file():
             raise FileNotFoundError(f"Context file not found: {fp}")
