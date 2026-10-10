@@ -1,0 +1,146 @@
+{
+  "version": "1.0.0",
+  "updated_at": "2026-10-10",
+  "models": [
+    {
+      "id": "qwen2.5-coder:14b",
+      "name": "Qwen 2.5 Coder 14B Instruct",
+      "family": "qwen",
+      "parameters_billion": 14.7,
+      "default_quantization": "Q4_K_M",
+      "size_gb": 8.98,
+      "minimum_vram_gb": 10.5,
+      "recommended_vram_gb": 12.0,
+      "recommended_tiers": ["Tier A", "Tier B", "Tier D"],
+      "primary_role": "Primary coding workhorse",
+      "task_suitability": ["code_generation", "refactoring", "ast_transformations", "tool_use"],
+      "benchmarks": {
+        "humaneval": 86.6,
+        "mbpp": 83.4,
+        "livecodebench": 41.2
+      },
+      "default_context_tokens": 32768,
+      "ollama_pull_command": "ollama pull qwen2.5-coder:14b",
+      "notes": "Optimal balance of frontier-rivaling coding accuracy and full in-VRAM execution."
+    },
+    {
+      "id": "qwen2.5-coder:7b",
+      "name": "Qwen 2.5 Coder 7B Instruct",
+      "family": "qwen",
+      "parameters_billion": 7.6,
+      "default_quantization": "Q4_K_M",
+      "size_gb": 4.68,
+      "minimum_vram_gb": 6.0,
+      "recommended_vram_gb": 8.0,
+      "recommended_tiers": ["Tier A", "Tier B", "Tier C", "Tier D"],
+      "primary_role": "High-velocity subagent deferral",
+      "task_suitability": ["linter_fixes", "docstring_generation", "unit_test_boilerplate", "commit_messages"],
+      "benchmarks": {
+        "humaneval": 82.3,
+        "mbpp": 78.2
+      },
+      "default_context_tokens": 32768,
+      "ollama_pull_command": "ollama pull qwen2.5-coder:7b",
+      "notes": "Generates at >115 tokens/sec; ideal for high-throughput mechanical subagent workflows."
+    },
+    {
+      "id": "deepseek-r1:14b",
+      "name": "DeepSeek-R1-Distill-Qwen-14B",
+      "family": "deepseek",
+      "parameters_billion": 14.7,
+      "default_quantization": "Q4_K_M",
+      "size_gb": 8.98,
+      "minimum_vram_gb": 10.5,
+      "recommended_vram_gb": 12.0,
+      "recommended_tiers": ["Tier A", "Tier B", "Tier D"],
+      "primary_role": "Local reasoning specialist",
+      "task_suitability": ["deep_reasoning", "complex_regex", "edge_case_analysis", "architecture_planning"],
+      "benchmarks": {
+        "math_500": 93.9,
+        "aime_2024": 53.1
+      },
+      "default_context_tokens": 32768,
+      "ollama_pull_command": "ollama pull deepseek-r1:14b",
+      "notes": "Deep chain-of-thought reasoning distilled from DeepSeek-R1 running fully in local memory."
+    },
+    {
+      "id": "llama3.1:8b",
+      "name": "Llama 3.1 8B Instruct",
+      "family": "llama",
+      "parameters_billion": 8.0,
+      "default_quantization": "Q4_K_M",
+      "size_gb": 4.92,
+      "minimum_vram_gb": 6.0,
+      "recommended_vram_gb": 8.0,
+      "recommended_tiers": ["Tier A", "Tier B", "Tier C", "Tier D"],
+      "primary_role": "Generalist NLP and tool calling",
+      "task_suitability": ["json_extraction", "summarization", "classification", "general_nlp"],
+      "benchmarks": {
+        "humaneval": 72.6,
+        "mmlu": 68.4
+      },
+      "default_context_tokens": 32768,
+      "ollama_pull_command": "ollama pull llama3.1:8b",
+      "notes": "Solid generalist baseline with strong instruction following and structured JSON adherence."
+    },
+    {
+      "id": "qwen2.5-coder:32b",
+      "name": "Qwen 2.5 Coder 32B Instruct",
+      "family": "qwen",
+      "parameters_billion": 32.5,
+      "default_quantization": "Q4_K_M",
+      "size_gb": 19.8,
+      "minimum_vram_gb": 16.0,
+      "recommended_vram_gb": 24.0,
+      "recommended_tiers": ["Tier A", "Tier D"],
+      "primary_role": "Frontier-level coding and complex refactoring",
+      "task_suitability": ["autonomous_coding", "multi_file_refactor", "complex_algorithms"],
+      "benchmarks": {
+        "humaneval": 92.7,
+        "multipl_e": 77.0,
+        "livecodebench": 51.1
+      },
+      "default_context_tokens": 16384,
+      "ollama_pull_command": "ollama pull qwen2.5-coder:32b",
+      "notes": "Near-frontier coding performance; runs via hybrid GPU/RAM offload on 16 GB GPUs at ~16 tok/s."
+    },
+    {
+      "id": "qwen2.5-coder:1.5b",
+      "name": "Qwen 2.5 Coder 1.5B Instruct",
+      "family": "qwen",
+      "parameters_billion": 1.54,
+      "default_quantization": "Q4_K_M",
+      "size_gb": 1.1,
+      "minimum_vram_gb": 2.0,
+      "recommended_vram_gb": 3.0,
+      "recommended_tiers": ["Tier C", "Tier E"],
+      "primary_role": "Ultra-fast CPU and mobile fallback",
+      "task_suitability": ["quick_syntax_edits", "commit_messages", "token_counting"],
+      "benchmarks": {
+        "humaneval": 65.2
+      },
+      "default_context_tokens": 16384,
+      "ollama_pull_command": "ollama pull qwen2.5-coder:1.5b",
+      "notes": "Lightweight model running at 25-40 tok/s even on CPU-only machines with AVX2."
+    },
+    {
+      "id": "nomic-embed-text",
+      "name": "Nomic Embed Text v1.5",
+      "family": "nomic",
+      "parameters_billion": 0.137,
+      "default_quantization": "FP16",
+      "size_gb": 0.56,
+      "minimum_vram_gb": 1.0,
+      "recommended_vram_gb": 1.5,
+      "recommended_tiers": ["Tier A", "Tier B", "Tier C", "Tier D", "Tier E"],
+      "primary_role": "Local semantic embeddings",
+      "task_suitability": ["semantic_search", "document_retrieval", "clustering"],
+      "benchmarks": {
+        "mteb": 62.28
+      },
+      "default_context_tokens": 8192,
+      "ollama_pull_command": "ollama pull nomic-embed-text",
+      "notes": "High-speed 8192-context embedding model for local RAG and semantic routing."
+    }
+  ]
+}

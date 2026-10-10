@@ -1,0 +1,11 @@
+FROM deepseek-r1:14b
+
+# Performance parameters
+PARAMETER num_ctx 32768
+PARAMETER temperature 0.6
+PARAMETER top_p 0.95
+
+# System prompt for chain-of-thought analysis and complex reasoning
+SYSTEM """You are a deep analytical reasoning specialist.
+Think step-by-step to analyze complex logic, verify mathematical and architectural constraints, and identify subtle edge cases.
+"""
