@@ -170,9 +170,9 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(res, indent=2))
             return 0
 
-        hw = res["hardware"]
+        hw_data = res["hardware"]
         print("=== Local AI Workstation Onboarding ===")
-        print(f"Detected Profile: {hw['tier']} - {hw['tier_description']}")
+        print(f"Detected Profile: {hw_data['tier']} - {hw_data['tier_description']}")
         print(f"Endpoint:         {res['endpoint']} ({'ONLINE' if res['endpoint_online'] else 'OFFLINE'})")
 
         if res["profile_only"]:
