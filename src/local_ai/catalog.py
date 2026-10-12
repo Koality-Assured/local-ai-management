@@ -9,7 +9,16 @@ from typing import Any
 
 def get_catalog_path() -> Path:
     """Return absolute path to models/catalog.json."""
-    return Path(__file__).resolve().parents[2] / "models" / "catalog.json"
+    repo_path = Path(__file__).resolve().parents[2] / "models" / "catalog.json"
+    if repo_path.exists():
+        return repo_path
+    cwd_path = Path.cwd() / "models" / "catalog.json"
+    if cwd_path.exists():
+        return cwd_path
+    pkg_path = Path(__file__).resolve().parent / "models" / "catalog.json"
+    if pkg_path.exists():
+        return pkg_path
+    return repo_path
 
 
 def load_catalog(custom_path: Path | None = None) -> list[dict[str, Any]]:
