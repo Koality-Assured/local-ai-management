@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-from local_ai.onboard import check_endpoint_health, run_onboarding
+from local_ai.onboard import run_onboarding
 
 
 class TestOnboarding(unittest.TestCase):

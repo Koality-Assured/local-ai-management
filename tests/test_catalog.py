@@ -3,8 +3,16 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
-from local_ai.catalog import filter_by_task, filter_by_tier, filter_system_one, get_model, load_catalog
+from local_ai.catalog import (
+    filter_by_task,
+    filter_by_tier,
+    filter_system_one,
+    get_catalog_path,
+    get_model,
+    load_catalog,
+)
 
 
 class TestModelCatalog(unittest.TestCase):
@@ -18,9 +26,20 @@ class TestModelCatalog(unittest.TestCase):
         self.assertIn("qwen2.5-coder:7b", ids)
         self.assertIn("deepseek-r1:14b", ids)
 
+    def test_get_catalog_path(self) -> None:
+        p = get_catalog_path()
+        self.assertTrue(p.is_file())
+        self.assertEqual(p.name, "catalog.json")
+
+    def test_load_catalog_missing_raises(self) -> None:
+        non_existent = Path("/non/existent/path/catalog.json")
+        with self.assertRaises(FileNotFoundError):
+            load_catalog(custom_path=non_existent)
+
     def test_get_model(self) -> None:
         m = get_model("qwen2.5-coder:14b")
         self.assertIsNotNone(m)
+        assert m is not None
         self.assertEqual(m["parameters_billion"], 14.7)
         self.assertEqual(m["default_quantization"], "Q4_K_M")
 
@@ -51,4 +70,3 @@ class TestModelCatalog(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

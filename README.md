@@ -90,7 +90,7 @@ See [`docs/hardware-profiles.md`](docs/hardware-profiles.md) for complete VRAM b
 
 ## Evaluated Model Catalog
 
-A machine-readable catalog is maintained in [`models/catalog.json`](models/catalog.json):
+A machine-readable catalog is packaged in [`src/local_ai/data/catalog.json`](src/local_ai/data/catalog.json):
 
 | Model | Parameters | Quantization | Size | Target Placement | Latency / Metric | Primary Role |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -115,10 +115,13 @@ A machine-readable catalog is maintained in [`models/catalog.json`](models/catal
 git clone https://github.com/Koality-Assured/local-ai-management.git
 cd local-ai-management
 
-# Install locally in editable mode
-pip install -e .
+# Install locally in editable mode with development dependencies
+pip install -e ".[dev]"
 
-# Run test suite
+# Run test suite via pytest
+pytest
+
+# Or via unittest (with development install or PYTHONPATH=src)
 python -m unittest discover tests
 ```
 

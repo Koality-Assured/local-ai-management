@@ -10,7 +10,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from local_ai.chat import (
-    SYSTEM_PRESETS,
     complete_chat,
     is_loopback_url,
     load_file_context,
