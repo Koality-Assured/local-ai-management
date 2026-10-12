@@ -17,7 +17,11 @@ def check_endpoint_health(base_url: str = "http://127.0.0.1:11434/v1") -> tuple[
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             models = data.get("data") or data.get("models") or []
-            names = [m.get("id") or m.get("name") for m in models if isinstance(m, dict)]
+            names: list[str] = [
+                str(entry_id)
+                for m in models
+                if isinstance(m, dict) and (entry_id := (m.get("id") or m.get("name")))
+            ]
             return True, names
     except Exception:
         return False, []
@@ -59,5 +63,5 @@ def run_onboarding(
     if is_online:
         result["message"] = f"Local AI engine is online at {base_url} and ready for inference."
     else:
-        result["message"] = f"Local AI engine is offline. Start Ollama ('ollama serve') to complete setup."
+        result["message"] = "Local AI engine is offline. Start Ollama ('ollama serve') to complete setup."
     return result

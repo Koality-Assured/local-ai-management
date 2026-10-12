@@ -36,11 +36,12 @@ local-ai-management/
 │   ├── serving-engines.md    # Ollama, llama.cpp, vLLM setup recipes & tuning
 │   ├── frontier-deferral.md  # Frontier-to-local task delegation taxonomy
 │   └── benchmarking-methodology.md # Standardized latency & throughput evaluation
-├── models/                   # Machine-readable model catalogs & templates
-│   ├── catalog.json          # Canonical registry of evaluated local models
+├── models/                   # Optimized Ollama Modelfiles
 │   └── modelfiles/           # Optimized Ollama Modelfiles
 ├── src/                      # Python package source
 │   └── local_ai/             # CLI, hardware probe, benchmarking, and onboarding
+│       ├── data/             # Packaged resources
+│       │   └── catalog.json  # Canonical registry of evaluated local models
 │       ├── __init__.py
 │       ├── hardware.py       # Dynamic hardware detection & tier classification
 │       ├── catalog.py        # Model catalog loading and querying

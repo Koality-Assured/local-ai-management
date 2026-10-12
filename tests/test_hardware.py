@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import patch
 
-from local_ai.hardware import HardwareProfile, classify_hardware_tier, detect_hardware
+from local_ai.hardware import classify_hardware_tier, detect_hardware
 
 
 class TestHardwareProfiling(unittest.TestCase):

@@ -3,32 +3,55 @@
 from __future__ import annotations
 
 import json
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
 
 def get_catalog_path() -> Path:
-    """Return absolute path to models/catalog.json."""
-    repo_path = Path(__file__).resolve().parents[2] / "models" / "catalog.json"
-    if repo_path.exists():
-        return repo_path
-    cwd_path = Path.cwd() / "models" / "catalog.json"
-    if cwd_path.exists():
-        return cwd_path
-    pkg_path = Path(__file__).resolve().parent / "models" / "catalog.json"
-    if pkg_path.exists():
-        return pkg_path
-    return repo_path
+    """Return path to packaged catalog.json."""
+    ref = files("local_ai.data").joinpath("catalog.json")
+    try:
+        candidate = Path(str(ref))
+        if candidate.is_file():
+            return candidate
+    except Exception:
+        pass
+    fallback = Path(__file__).resolve().parent / "data" / "catalog.json"
+    if fallback.is_file():
+        return fallback
+    raise FileNotFoundError("Model catalog resource 'data/catalog.json' not found in package 'local_ai'")
 
 
 def load_catalog(custom_path: Path | None = None) -> list[dict[str, Any]]:
-    """Load model entries from the catalog."""
-    catalog_file = custom_path or get_catalog_path()
-    if not catalog_file.exists():
-        return []
-    with open(catalog_file, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return data.get("models", [])
+    """Load model entries from the catalog.
+
+    Raises:
+        FileNotFoundError: If the catalog file or resource cannot be found.
+        json.JSONDecodeError: If the catalog is not valid JSON.
+    """
+    if custom_path is not None:
+        if not custom_path.is_file():
+            raise FileNotFoundError(f"Model catalog not found at custom path: {custom_path}")
+        with open(custom_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("models", [])
+
+    ref = files("local_ai.data").joinpath("catalog.json")
+    try:
+        content = ref.read_text(encoding="utf-8")
+        data = json.loads(content)
+        return data.get("models", [])
+    except (FileNotFoundError, ModuleNotFoundError):
+        pass
+
+    fallback = Path(__file__).resolve().parent / "data" / "catalog.json"
+    if fallback.is_file():
+        with open(fallback, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("models", [])
+
+    raise FileNotFoundError("Model catalog resource 'data/catalog.json' not found in package 'local_ai'")
 
 
 def get_model(model_id: str, models: list[dict[str, Any]] | None = None) -> dict[str, Any] | None:
@@ -59,4 +82,3 @@ def filter_system_one(models: list[dict[str, Any]] | None = None) -> list[dict[s
     """Filter models categorized as System 1 decision models."""
     entries = models if models is not None else load_catalog()
     return [m for m in entries if m.get("category") == "system_one" or m.get("is_system_one", False)]
-

@@ -6,9 +6,16 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
-from local_ai.benchmark import STANDARD_BENCHMARKS, SYSTEM_ONE_BENCHMARKS, run_benchmark_suite
-from local_ai.catalog import filter_by_task, filter_by_tier, filter_system_one, get_model, load_catalog
+from local_ai.benchmark import run_benchmark_suite
+from local_ai.catalog import (
+    filter_by_task,
+    filter_by_tier,
+    filter_system_one,
+    get_model,
+    load_catalog,
+)
 from local_ai.chat import SYSTEM_PRESETS, complete_chat, load_file_context, run_repl, stream_chat
 from local_ai.hardware import detect_hardware
 from local_ai.modelfile import generate_llama_server_command, generate_ollama_modelfile
@@ -56,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_model.add_argument("--context", type=int, default=32768, help="Context window token count")
     p_model.add_argument("--temperature", type=float, default=0.2, help="Sampling temperature")
     p_model.add_argument("--engine", choices=["ollama", "llama-server"], default="ollama", help="Target engine")
- 
+
     # chat
     p_chat = sub.add_parser("chat", help="Direct local inference REPL and one-shot execution", parents=[shared])
     p_chat.add_argument("-q", "--query", help="One-shot query text")
@@ -106,22 +113,22 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "catalog":
         models = load_catalog()
         if args.id:
-            m = get_model(args.id, models)
-            if not m:
+            target_model = get_model(args.id, models)
+            if not target_model:
                 print(f"Model '{args.id}' not found in catalog.", file=sys.stderr)
                 return 1
             if args.json:
-                print(json.dumps(m, indent=2))
+                print(json.dumps(target_model, indent=2))
                 return 0
-            print(f"=== {m['name']} ({m['id']}) ===")
-            print(f"Parameters:       {m['parameters_billion']}B")
-            print(f"Quantization:     {m['default_quantization']}")
-            print(f"Disk Size:        {m['size_gb']} GB")
-            print(f"Minimum VRAM:     {m['minimum_vram_gb']} GB")
-            print(f"Recommended Tiers: {', '.join(m['recommended_tiers'])}")
-            print(f"Primary Role:     {m['primary_role']}")
-            print(f"Pull Command:     {m['ollama_pull_command']}")
-            print(f"Notes:            {m['notes']}")
+            print(f"=== {target_model['name']} ({target_model['id']}) ===")
+            print(f"Parameters:       {target_model['parameters_billion']}B")
+            print(f"Quantization:     {target_model['default_quantization']}")
+            print(f"Disk Size:        {target_model['size_gb']} GB")
+            print(f"Minimum VRAM:     {target_model['minimum_vram_gb']} GB")
+            print(f"Recommended Tiers: {', '.join(target_model['recommended_tiers'])}")
+            print(f"Primary Role:     {target_model['primary_role']}")
+            print(f"Pull Command:     {target_model['ollama_pull_command']}")
+            print(f"Notes:            {target_model['notes']}")
             return 0
 
         if args.tier:
@@ -163,9 +170,9 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(res, indent=2))
             return 0
 
-        hw = res["hardware"]
+        hw_data = res["hardware"]
         print("=== Local AI Workstation Onboarding ===")
-        print(f"Detected Profile: {hw['tier']} - {hw['tier_description']}")
+        print(f"Detected Profile: {hw_data['tier']} - {hw_data['tier_description']}")
         print(f"Endpoint:         {res['endpoint']} ({'ONLINE' if res['endpoint_online'] else 'OFFLINE'})")
 
         if res["profile_only"]:
@@ -180,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
             print("=" * 60)
             return 0
 
-        print(f"\nStatus: APPROVED")
+        print("\nStatus: APPROVED")
         print(res["message"])
         return 0
 
